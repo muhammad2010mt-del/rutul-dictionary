@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        body {
+            background: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            padding: 20px;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: var(--tg-theme-text-color, #000000);
+        }
+        .search-box {
+            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: var(--tg-theme-button-color, #2481cc);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .result {
+            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+        }
+        .word-card {
+            background: var(--tg-theme-bg-color, #ffffff);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+        .word-rutul {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        .word-translation {
+            font-size: 16px;
+            color: var(--tg-theme-hint-color, #666666);
+        }
+        .suggestions {
+            margin-top: 15px;
+        }
+        .suggestion-item {
+            padding: 10px;
+            background: var(--tg-theme-bg-color, #ffffff);
+            border-radius: 8px;
+            margin-bottom: 5px;
+            cursor: pointer;
+        }
+        .suggestion-item:hover {
+            opacity: 0.8;
+        }
+        .status {
+            font-size: 14px;
+            color: var(--tg-theme-hint-color, #999999);
+            margin-top: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📖 Рутульский словарь</h1>
+        
+        <div class="search-box">
+            <input type="text" id="searchWord" placeholder="Введите слово..." autocomplete="off">
+            <button onclick="searchWord()">🔍 Найти перевод</button>
+        </div>
+
+        <div class="result" id="result"></div>
+        <div class="suggestions" id="suggestions"></div>
+        <div class="status" id="status"></div>
+    </div>
+
+    <script>
+        const tg = Telegram.WebApp;
+        tg.expand();
+        tg.ready();
+
+        // ТВОЙ СЛОВАРЬ (добавляй сюда новые слова)
+        const dictionary = {
+            'мыхе': 'родной',
+            'хед': 'вода',
+            'тыла': 'собака',
+            'мащин': 'машина',
+            'хыды': 'друг',
+            'хал': 'дом',
+            'улесды': 'еда',
+            'михIман': 'гость'
+        };
+
+        function searchWord() {
+            const word = document.getElementById('searchWord').value.toLowerCase().trim();
+            const resultDiv = document.getElementById('result');
+            const suggestionsDiv = document.getElementById('suggestions');
+            const statusDiv = document.getElementById('status');
+
+            if (!word) {
+                statusDiv.innerText = '❌ Введите слово';
+                return;
+            }
+
+            // Ищем точное совпадение
+            if (dictionary[word]) {
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = `
+                    <div class="word-card">
+                        <div class="word-rutul">🔤 ${word}</div>
+                        <div class="word-translation">📖 ${dictionary[word]}</div>
+                    </div>
+                `;
+                suggestionsDiv.innerHTML = '';
+                statusDiv.innerText = '';
+                return;
+            }
+
+            // Ищем похожие слова
+            const similar = [];
+            for (let key in dictionary) {
+                if (key.includes(word)) {
+                    similar.push(key);
+                }
+            }
+
+            if (similar.length > 0) {
+                resultDiv.style.display = 'none';
+                let html = '<div class="word-card"><div style="margin-bottom: 10px;">🔍 Похожие слова:</div>';
+                similar.slice(0, 5).forEach(s => {
+                    html += `<div class="suggestion-item" onclick="selectWord('${s}')">🔤 ${s} → ${dictionary[s]}</div>`;
+                });
+                html += '</div>';
+                suggestionsDiv.innerHTML = html;
+                statusDiv.innerText = '';
+            } else {
+                resultDiv.style.display = 'none';
+                suggestionsDiv.innerHTML = '';
+                statusDiv.innerText = '❌ Слово не найдено';
+            }
+        }
+
+        function selectWord(word) {
+            document.getElementById('searchWord').value = word;
+            searchWord();
+        }
+
+        document.getElementById('searchWord').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchWord();
+            }
+        });
+    </script>
+</body>
+</html>
